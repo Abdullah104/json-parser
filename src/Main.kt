@@ -4,16 +4,41 @@ import kotlin.system.exitProcess
 fun main(args: Array<String>) = parseString(File(args.first()).readText())
 
 fun parseString(string: String) {
-    if (!(string.startsWith('{') && string.endsWith('}'))) {
-        System.err.println("Invalid json format")
+    val cleanedString = string.replace("\n", "")
+    val objectRegex = """(\{.*\})""".toRegex()
 
-        exitProcess(1)
-    }
+    if (!objectRegex.matches(cleanedString)) indicateInvalidFormat()
 
-    val json = HashMap<String, Any>()
+//    val json = HashMap<String, Any>()
+//
+//    val entries = string.split(",")
+//
+//    println(entries)
+//
+//    for (entry in entries) {
+//        val entryRegex = "\"([A-Za-z])\\w+\"".toRegex()
+//        val matches = entryRegex.matchEntire(entry)
+//
+//        println(matches)
+//
+//
+//        val keyValuePair = entry.split(":")
+//
+//
+//        val key = keyValuePair.first()
+//        val value = keyValuePair[1]
+//    }
+//
+//    return
+//
+//    val builder = StringBuilder().append("{}")
+//    println(builder)
+//
+//    exitProcess(0)
+}
 
-    val builder = StringBuilder().append("{}")
-    println(builder)
+fun indicateInvalidFormat() {
+    System.err.println("Invalid json format")
 
-    exitProcess(0)
+    exitProcess(1)
 }
