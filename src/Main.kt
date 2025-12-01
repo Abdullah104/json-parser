@@ -1,44 +1,49 @@
 import java.io.File
-import kotlin.system.exitProcess
 
-fun main(args: Array<String>) = parseString(File(args.first()).readText())
+fun main() {
+    for (step in 2 downTo 1) {
+        val directory = File("src/tests/step$step")
 
-fun parseString(string: String) {
-    val cleanedString = string.replace("\n", "")
-    val objectRegex = """(\{.*\})""".toRegex()
-
-    if (!objectRegex.matches(cleanedString)) indicateInvalidFormat()
-
-//    val json = HashMap<String, Any>()
-//
-//    val entries = string.split(",")
-//
-//    println(entries)
-//
-//    for (entry in entries) {
-//        val entryRegex = "\"([A-Za-z])\\w+\"".toRegex()
-//        val matches = entryRegex.matchEntire(entry)
-//
-//        println(matches)
-//
-//
-//        val keyValuePair = entry.split(":")
-//
-//
-//        val key = keyValuePair.first()
-//        val value = keyValuePair[1]
-//    }
-//
-//    return
-//
-//    val builder = StringBuilder().append("{}")
-//    println(builder)
-//
-//    exitProcess(0)
+        for (file in directory.listFiles()!!) parseFile(file)
+    }
 }
 
-fun indicateInvalidFormat() {
-    System.err.println("Invalid json format")
+fun parseFile(file: File) {
+    val stringJson = file.readText().replace(Regex("""\n|\s+"""), "")
+    val objectRegex = """(\{.*(?<!,)\})""".toRegex()
 
-    exitProcess(1)
+    if (!objectRegex.matches(stringJson) || stringJson.endsWith(",}")) {
+        indicateInvalidFormat(file)
+
+        return
+    }
+
+    val parsedJson = HashMap<String, Any>()
+
+    val entries = stringJson.removeSurrounding("{", "}").split(",").filter { it.isNotEmpty() }
+
+    for (entry in entries) {
+        val entryPartRegex = "(\"\\w*\")".toRegex()
+        val entryRegex = "$entryPartRegex:$entryPartRegex".toRegex()
+        val matches = entryRegex.matchEntire(entry)
+
+        if (matches == null) {
+            indicateInvalidFormat(file)
+
+            return
+        }
+
+
+        val keyValuePair = entry.split(":").map { it.replace("\"", "") }
+
+
+        val key = keyValuePair.first()
+        val value = keyValuePair[1]
+
+        parsedJson[key] = value
+    }
+
+    println("${file.path} => $parsedJson")
 }
+
+fun indicateInvalidFormat(file: File) = System.err.println("Invalid json format at ${file.path}")
