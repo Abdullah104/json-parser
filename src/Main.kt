@@ -1,7 +1,7 @@
 import java.io.File
 
 fun main() {
-    for (step in 2 downTo 1) {
+    for (step in 3 downTo 1) {
         val directory = File("src/tests/step$step")
 
         for (file in directory.listFiles()!!) parseFile(file)
@@ -18,13 +18,13 @@ fun parseFile(file: File) {
         return
     }
 
-    val parsedJson = HashMap<String, Any>()
+    val parsedJson = HashMap<String, Any?>()
 
     val entries = stringJson.removeSurrounding("{", "}").split(",").filter { it.isNotEmpty() }
 
     for (entry in entries) {
-        val entryPartRegex = "(\"\\w*\")".toRegex()
-        val entryRegex = "$entryPartRegex:$entryPartRegex".toRegex()
+        val stringRegex = "\"\\w*\"".toRegex()
+        val entryRegex = "${stringRegex}:.*".toRegex()
         val matches = entryRegex.matchEntire(entry)
 
         if (matches == null) {
@@ -33,12 +33,19 @@ fun parseFile(file: File) {
             return
         }
 
+        val keyValuePair = entry.split(":")
+        val key = keyValuePair.first().replace("\"", "")
+        var value: Any? = keyValuePair[1]
 
-        val keyValuePair = entry.split(":").map { it.replace("\"", "") }
+        if (value.toString().toIntOrNull() != null) value = value.toString().toInt()
+        else if (value.toString().toDoubleOrNull() != null) value = value.toString().toDouble()
+        else if (value.toString().toBooleanStrictOrNull() != null) value = value.toString().toBooleanStrict()
+        else if (value == "null") value = null
+        else if (stringRegex.matchEntire(value.toString()) == null) {
+            indicateInvalidFormat(file)
 
-
-        val key = keyValuePair.first()
-        val value = keyValuePair[1]
+            return
+        }
 
         parsedJson[key] = value
     }
