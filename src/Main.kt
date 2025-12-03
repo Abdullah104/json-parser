@@ -1,6 +1,7 @@
 import java.io.File
 
-val objectRegex = """(\{.*(?<!,)\})""".toRegex()
+val objectRegex = """(\{.*(?<!,)})""".toRegex()
+val arrayRegex = """\[.*(?<!,)]""".toRegex()
 val stringRegex = "\"\\w*\"".toRegex()
 
 fun indicateInvalidFormat(file: File) = System.err.println("Invalid json format at ${file.path}")
@@ -11,6 +12,7 @@ fun parseValue(value: Any?): Any? {
     else if (value.toString().toBooleanStrictOrNull() != null) return value.toString().toBooleanStrict()
     else if (value == "null") return null
     else if (objectRegex.matches(value.toString())) return parseObject(value.toString())
+    else if (arrayRegex.matches(value.toString())) return parseArray(value.toString())
     else if (stringRegex.matchEntire(value.toString()) == null) throw IllegalArgumentException()
 
     return value // If all previous conditions fail, then [value] is of type String
@@ -36,6 +38,12 @@ fun parseObject(stringJson: String): HashMap<String, Any?> {
     }
 
     return parsedJson
+}
+
+fun parseArray(stringArray: String): Array<Any?> {
+    val list = mutableListOf<Any?>()
+
+    return list.toTypedArray()
 }
 
 
