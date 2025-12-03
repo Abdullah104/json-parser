@@ -1,22 +1,11 @@
 import java.io.File
 
-fun main() {
-    for (step in 3 downTo 1) {
-        val directory = File("src/tests/step$step")
+fun indicateInvalidFormat(file: File) = System.err.println("Invalid json format at ${file.path}")
 
-        for (file in directory.listFiles()!!) parseFile(file)
-    }
-}
-
-fun parseFile(file: File) {
-    val stringJson = file.readText().replace(Regex("""\n|\s+"""), "")
+fun parseObject(stringJson: String): HashMap<String, Any?> {
     val objectRegex = """(\{.*(?<!,)\})""".toRegex()
 
-    if (!objectRegex.matches(stringJson) || stringJson.endsWith(",}")) {
-        indicateInvalidFormat(file)
-
-        return
-    }
+    if (!objectRegex.matches(stringJson)) throw IllegalArgumentException()
 
     val parsedJson = HashMap<String, Any?>()
 
@@ -25,13 +14,7 @@ fun parseFile(file: File) {
     for (entry in entries) {
         val stringRegex = "\"\\w*\"".toRegex()
         val entryRegex = "${stringRegex}:.*".toRegex()
-        val matches = entryRegex.matchEntire(entry)
-
-        if (matches == null) {
-            indicateInvalidFormat(file)
-
-            return
-        }
+        if (entryRegex.matchEntire(entry) == null) throw IllegalArgumentException()
 
         val keyValuePair = entry.split(":")
         val key = keyValuePair.first().replace("\"", "")
@@ -41,16 +24,31 @@ fun parseFile(file: File) {
         else if (value.toString().toDoubleOrNull() != null) value = value.toString().toDouble()
         else if (value.toString().toBooleanStrictOrNull() != null) value = value.toString().toBooleanStrict()
         else if (value == "null") value = null
-        else if (stringRegex.matchEntire(value.toString()) == null) {
-            indicateInvalidFormat(file)
-
-            return
-        }
+        else if (stringRegex.matchEntire(value.toString()) == null) throw IllegalArgumentException()
 
         parsedJson[key] = value
     }
 
-    println("${file.path} => $parsedJson")
+    return parsedJson
 }
 
-fun indicateInvalidFormat(file: File) = System.err.println("Invalid json format at ${file.path}")
+
+fun parseFile(file: File) {
+    try {
+        val stringJson = file.readText().replace(Regex("""\n|\s+"""), "")
+        val json = parseObject(stringJson)
+
+        println("${file.path} => $json")
+    } catch (_: IllegalArgumentException) {
+        indicateInvalidFormat(file)
+    }
+}
+
+
+fun main() {
+    for (step in 3 downTo 1) {
+        val directory = File("src/tests/step$step")
+
+        for (file in directory.listFiles()!!) parseFile(file)
+    }
+}
