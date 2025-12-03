@@ -2,7 +2,7 @@ import java.io.File
 
 val objectRegex = """(\{.*(?<!,)})""".toRegex()
 val arrayRegex = """\[.*(?<!,)]""".toRegex()
-val stringRegex = "\"\\w*\"".toRegex()
+val stringRegex = "\"\\w.*\"".toRegex()
 
 fun indicateInvalidFormat(file: File) = System.err.println("Invalid json format at ${file.path}")
 
