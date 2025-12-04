@@ -4,7 +4,7 @@ val objectRegex = """(\{.*(?<!,)})""".toRegex()
 val arrayRegex = """\[.*(?<!,)]""".toRegex()
 val stringRegex = "\".*\"".toRegex()
 
-fun String.normalized() = replace("\"", "")
+fun String.normalized() = substring(1, length - 1).trim()
 
 fun getClosingCharacterIndex(string: String, closingCharacter: Char, openingCharacter: Char): Int {
     var count = 0
@@ -28,23 +28,42 @@ fun parseValue(value: Any?): Any? {
     else if (arrayRegex.matches(value.toString())) return parseArray(value.toString())
     else if (stringRegex.matchEntire(value.toString()) == null) throw IllegalArgumentException()
 
-    return (value as String).normalized() // If all previous conditions fail, then [value] is of type String
+    return (value as String).replace("\"", "") // If all previous conditions fail, then [value] is of type String
 }
 
 fun parseObject(stringJson: String): HashMap<String, Any?> {
     val parsedJson = HashMap<String, Any?>()
 
-    val entries = stringJson.removeSurrounding("{", "}").split(",").filter { it.isNotEmpty() }.map { it.trim() }
+    var iterator = stringJson.removeSurrounding("{", "}").trim()
+    while (iterator.isNotBlank()) {
+        val nextSeparatorIndex = iterator.indexOf(':')
 
-    for (entry in entries) {
-        val entryRegex = "${stringRegex}:.*".toRegex()
-        if (entryRegex.matchEntire(entry) == null) throw IllegalArgumentException()
+        var key = iterator.take(nextSeparatorIndex)
+        if (stringRegex.matchEntire(key) == null) throw IllegalArgumentException()
+        iterator = iterator.drop(nextSeparatorIndex + 1).trim()
+        key = key.trim().replace("\"", "")
 
-        val keyValueSplitIndex = entry.indexOf(':')
-        val key = entry.take(keyValueSplitIndex - 1).normalized()
-        val value = parseValue(entry.substring(keyValueSplitIndex + 1).trim())
+        var quotationMarksCount = 0
+        var valueEndIndex = iterator.substring(nextSeparatorIndex + 1).length
+        for (index in 0..<iterator.length) {
+            val ch = iterator[index]
+
+            if (ch == '"') quotationMarksCount = (quotationMarksCount + 1) % 2
+
+            if (ch == ',' && quotationMarksCount == 0) {
+                valueEndIndex = index
+
+                break
+            }
+        }
+
+        val rawValue = iterator.take(valueEndIndex)
+        val value = parseValue(if (rawValue.startsWith('"')) rawValue else rawValue.trim())
 
         parsedJson[key] = value
+
+        iterator = iterator.drop(rawValue.length + 1).trim()
+
     }
 
     return parsedJson
@@ -149,17 +168,14 @@ fun Any.friendlyString(): String {
 }
 
 fun main() {
-//    for (step in 4 downTo 1) {
-//        val directory = File("src/tests/step$step")
+//    for (step in 2 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
+    val file = File("src/tests/step2/valid.json")
+        try {
+            val json = parseFile(file)
 
-//        for (file in directory.listFiles()!!)
-    val file = File("src/tests/step5/pass1.json")
-    try {
-        val json = parseFile(file)
-
-        println("${file.path}: ${json.friendlyString()}")
-    } catch (_: IllegalArgumentException) {
-        System.err.println("Invalid json format at ${file.path}")
-    }
+            println("${file.path}: ${json.friendlyString()}")
+        } catch (_: IllegalArgumentException) {
+            System.err.println("Invalid json format at ${file.path}")
+        }
 //    }
 }
