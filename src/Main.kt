@@ -2,7 +2,7 @@ import java.io.File
 
 val objectRegex = """(\{.*(?<!,)})""".toRegex()
 val arrayRegex = """\[.*(?<!,)]""".toRegex()
-val stringRegex = "\"\\w.*\"".toRegex()
+val stringRegex = "\".*\"".toRegex()
 
 fun String.normalized() = replace("\"", "")
 
@@ -54,7 +54,7 @@ fun parseArray(stringArray: String): Array<Any?> {
     val list = mutableListOf<Any?>()
 
     // Remove surrounding brackets
-    var iterator = stringArray.substring(1, stringArray.length - 1)
+    var iterator = stringArray.substring(1, stringArray.length - 1).trim()
 
     while (iterator.isNotBlank()) {
         if (iterator.first() == '{') {
@@ -64,7 +64,7 @@ fun parseArray(stringArray: String): Array<Any?> {
 
             list.add(parseObject(iterator.take(endIndex + 1)))
 
-            iterator = iterator.drop(endIndex)
+            iterator = iterator.drop(endIndex + 2).trim()
 
             continue
         }
@@ -76,7 +76,7 @@ fun parseArray(stringArray: String): Array<Any?> {
 
             list.add(parseArray(iterator.take(endIndex + 1)))
 
-            iterator = iterator.drop(endIndex)
+            iterator = iterator.drop(endIndex + 2).trim()
 
             continue
         }
@@ -84,9 +84,9 @@ fun parseArray(stringArray: String): Array<Any?> {
         val nextCommaIndex = iterator.indexOf(',')
         val value = iterator.take(if (nextCommaIndex == -1) iterator.length else nextCommaIndex)
 
-        list.add(parseValue(value))
+        list.add(parseValue(value.trim()))
 
-        iterator = iterator.replace(value, "")
+        iterator = iterator.drop(if (nextCommaIndex == -1) value.length + 2 else nextCommaIndex + 1).trim()
     }
 
     return list.toTypedArray()
@@ -149,15 +149,17 @@ fun Any.friendlyString(): String {
 }
 
 fun main() {
-    for (step in 4 downTo 1) {
-        val directory = File("src/tests/step$step")
+//    for (step in 4 downTo 1) {
+//        val directory = File("src/tests/step$step")
 
-        for (file in directory.listFiles()!!) try {
-            val json = parseFile(file)
+//        for (file in directory.listFiles()!!)
+    val file = File("src/tests/step5/pass1.json")
+    try {
+        val json = parseFile(file)
 
-            println("${file.path}: ${json.friendlyString()}")
-        } catch (_: IllegalArgumentException) {
-            System.err.println("Invalid json format at ${file.path}")
-        }
+        println("${file.path}: ${json.friendlyString()}")
+    } catch (_: IllegalArgumentException) {
+        System.err.println("Invalid json format at ${file.path}")
     }
+//    }
 }
