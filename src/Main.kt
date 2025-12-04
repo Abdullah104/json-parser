@@ -6,6 +6,19 @@ val stringRegex = "\"\\w.*\"".toRegex()
 
 fun String.normalized() = replace("\"", "")
 
+fun getClosingCharacterIndex(string: String, closingCharacter: Char, openingCharacter: Char): Int {
+    var count = 0
+
+    string.forEachIndexed { index, ch ->
+        if (ch == openingCharacter) count++
+        if (ch == closingCharacter) count--
+
+        if (count == 0) return index
+    }
+
+    return -1
+}
+
 fun parseValue(value: Any?): Any? {
     if (value.toString().toIntOrNull() != null) return value.toString().toInt()
     else if (value.toString().toDoubleOrNull() != null) return value.toString().toDouble()
@@ -44,27 +57,35 @@ fun parseArray(stringArray: String): Array<Any?> {
     var iterator = stringArray.substring(1, stringArray.length - 1)
 
     while (iterator.isNotBlank()) {
-        val objectMatch = objectRegex.matchAt(iterator, 0)
-        val arrayMatch = arrayRegex.matchAt(iterator, 0)
+//        val objectMatch = objectRegex.matchAt(iterator, 0)
+//        val arrayMatch = arrayRegex.matchAt(iterator, 0)
 
-        if (objectMatch != null) {
-            list.add(parseObject(objectMatch.value))
+        if (iterator.first() == '{') {
+            val endIndex = getClosingCharacterIndex(iterator, '}', '{')
 
-            iterator = iterator.replace(objectMatch.value, "")
+            if (endIndex == -1) throw IllegalArgumentException()
+
+            list.add(parseObject(iterator.take(endIndex + 1)))
+
+            iterator = iterator.drop(endIndex)
 
             continue
         }
 
-        if (arrayMatch != null) {
-            list.add(parseArray(arrayMatch.value))
+        if (iterator.first() == '[') {
+            val endIndex = getClosingCharacterIndex(iterator, ']', '[')
 
-            iterator = iterator.replace(arrayMatch.value, "")
+            if (endIndex == -1) throw IllegalArgumentException()
+
+            list.add(parseArray(iterator.take(endIndex + 1)))
+
+            iterator = iterator.drop(endIndex)
 
             continue
         }
 
         val nextCommaIndex = iterator.indexOf(',')
-        val value = iterator.take(if (nextCommaIndex == -1) iterator.length else nextCommaIndex - 1)
+        val value = iterator.take(if (nextCommaIndex == -1) iterator.length else nextCommaIndex)
 
         list.add(parseValue(value))
 
@@ -137,7 +158,7 @@ fun main() {
         for (file in directory.listFiles()!!) try {
             val json = parseFile(file)
 
-            println("${file.path} => ${json.friendlyString()}")
+            println("${file.path}: ${json.friendlyString()}")
         } catch (_: IllegalArgumentException) {
             System.err.println("Invalid json format at ${file.path}")
         }
