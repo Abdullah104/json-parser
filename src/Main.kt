@@ -34,7 +34,7 @@ fun parseValue(value: Any?): Any? {
 fun parseObject(stringJson: String): HashMap<String, Any?> {
     val parsedJson = HashMap<String, Any?>()
 
-    val entries = stringJson.removeSurrounding("{", "}").split(",").filter { it.isNotEmpty() }
+    val entries = stringJson.removeSurrounding("{", "}").split(",").filter { it.isNotEmpty() }.map { it.trim() }
 
     for (entry in entries) {
         val entryRegex = "${stringRegex}:.*".toRegex()
@@ -42,7 +42,7 @@ fun parseObject(stringJson: String): HashMap<String, Any?> {
 
         val keyValueSplitIndex = entry.indexOf(':')
         val key = entry.take(keyValueSplitIndex - 1).normalized()
-        val value = parseValue(entry.substring(keyValueSplitIndex + 1))
+        val value = parseValue(entry.substring(keyValueSplitIndex + 1).trim())
 
         parsedJson[key] = value
     }
@@ -57,9 +57,6 @@ fun parseArray(stringArray: String): Array<Any?> {
     var iterator = stringArray.substring(1, stringArray.length - 1)
 
     while (iterator.isNotBlank()) {
-//        val objectMatch = objectRegex.matchAt(iterator, 0)
-//        val arrayMatch = arrayRegex.matchAt(iterator, 0)
-
         if (iterator.first() == '{') {
             val endIndex = getClosingCharacterIndex(iterator, '}', '{')
 
@@ -96,7 +93,7 @@ fun parseArray(stringArray: String): Array<Any?> {
 }
 
 fun parseFile(file: File): Any {
-    val stringJson = file.readText().replace(Regex("""\n|\s+"""), "")
+    val stringJson = file.readText().replace("\n", "")
 
     return parseValue(stringJson)!!
 }
