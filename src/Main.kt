@@ -34,6 +34,8 @@ fun parseValue(value: Any?): Any? {
 fun parseObject(stringJson: String): HashMap<String, Any?> {
     val parsedJson = HashMap<String, Any?>()
 
+    return parsedJson
+
     var iterator = stringJson.removeSurrounding("{", "}").trim()
     while (iterator.isNotBlank()) {
         val nextSeparatorIndex = iterator.indexOf(':')
@@ -114,6 +116,8 @@ fun parseArray(stringArray: String): Array<Any?> {
 fun parseFile(file: File): Any {
     val stringJson = file.readText().replace("\n", "")
 
+    if (!(objectRegex.matches(stringJson) || arrayRegex.matches(stringJson))) throw IllegalArgumentException()
+
     return parseValue(stringJson)!!
 }
 
@@ -168,8 +172,8 @@ fun Any.friendlyString(): String {
 }
 
 fun main() {
-//    for (step in 2 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
-    val file = File("src/tests/step2/valid.json")
+    for (step in 1 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
+//    val file = File("src/tests/step2/valid.json")
         try {
             val json = parseFile(file)
 
@@ -177,5 +181,4 @@ fun main() {
         } catch (_: IllegalArgumentException) {
             System.err.println("Invalid json format at ${file.path}")
         }
-//    }
 }
