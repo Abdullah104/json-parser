@@ -4,8 +4,6 @@ val objectRegex = """(\{.*(?<!,)})""".toRegex()
 val arrayRegex = """\[.*(?<!,)]""".toRegex()
 val stringRegex = "\"\\w.*\"".toRegex()
 
-fun indicateInvalidFormat(file: File) = System.err.println("Invalid json format at ${file.path}")
-
 fun String.normalized() = replace("\"", "")
 
 fun parseValue(value: Any?): Any? {
@@ -71,42 +69,77 @@ fun parseArray(stringArray: String): Array<Any?> {
         list.add(parseValue(value))
 
         iterator = iterator.replace(value, "")
-
-//        if (objectRegex.matchesAt(iterator, 0)) {
-//            var objectEndIndex = 1
-//            var curlyBracesStack = 1
-//
-//            while (curlyBracesStack != 0 && objectEndIndex < stringArray.length) {
-//                if (iterator[objectEndIndex] == '{') curlyBracesStack++
-//                if (iterator[objectEndIndex] == '}') curlyBracesStack--
-//
-//                if (curlyBracesStack != 0) objectEndIndex++
-//            }
-//
-//            if (curlyBracesStack != 0) throw IllegalArgumentException()
-//        }
     }
 
     return list.toTypedArray()
 }
 
+fun parseFile(file: File): Any {
+    val stringJson = file.readText().replace(Regex("""\n|\s+"""), "")
 
-fun parseFile(file: File) {
-    try {
-        val stringJson = file.readText().replace(Regex("""\n|\s+"""), "")
-        val json = parseValue(stringJson)
-
-        println("${file.path} => $json")
-    } catch (_: IllegalArgumentException) {
-        indicateInvalidFormat(file)
-    }
+    return parseValue(stringJson)!!
 }
 
+fun HashMap<*, *>.toJsonString(indentations: Int = 1): String {
+    val builder = StringBuilder("{")
+
+    if (isNotEmpty()) builder.append('\n')
+
+    entries.forEachIndexed { index, entry ->
+        builder.append("${"\t".repeat(indentations + 1)}${entry.key}: ")
+
+
+        when (val value = entry.value) {
+            is HashMap<*, *> -> builder.append(value.toJsonString(indentations + 1))
+            is Array<*> -> builder.append(value.toJsonString())
+            else -> builder.append("$value")
+        }
+
+        if (index < entries.size - 1) builder.append(',')
+
+        builder.append("\n")
+    }
+
+    builder.append("${"\t".repeat(if (indentations == 1 || isEmpty()) 0 else indentations)}}")
+
+    return builder.toString()
+}
+
+fun Array<*>.toJsonString(): String {
+    val builder = StringBuilder("[")
+
+    forEachIndexed { index, value ->
+        builder.append(value)
+
+        if (index < size - 1) builder.append(',')
+    }
+
+    builder.append("]")
+    return builder.toString()
+}
+
+fun Any.friendlyString(): String {
+    val builder = StringBuilder()
+
+    if (this is HashMap<*, *>) {
+        builder.append(this.toJsonString())
+    } else if (this is Array<*>) {
+        builder.append(this.toJsonString())
+    }
+
+    return builder.toString()
+}
 
 fun main() {
-    for (step in 3 downTo 1) {
+    for (step in 4 downTo 1) {
         val directory = File("src/tests/step$step")
 
-        for (file in directory.listFiles()!!) parseFile(file)
+        for (file in directory.listFiles()!!) try {
+            val json = parseFile(file)
+
+            println("${file.path} => ${json.friendlyString()}")
+        } catch (_: IllegalArgumentException) {
+            System.err.println("Invalid json format at ${file.path}")
+        }
     }
 }
