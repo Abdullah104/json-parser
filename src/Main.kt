@@ -2,9 +2,7 @@ import java.io.File
 
 val objectRegex = """(\{.*(?<!,)})""".toRegex()
 val arrayRegex = """\[.*(?<!,)]""".toRegex()
-val stringRegex = "\".*\"".toRegex()
-
-fun String.normalized() = substring(1, length - 1).trim()
+val stringRegex = "\"(.*?)\"".toRegex()
 
 fun getClosingCharacterIndex(string: String, closingCharacter: Char, openingCharacter: Char): Int {
     var count = 0
@@ -34,39 +32,25 @@ fun parseValue(value: Any?): Any? {
 fun parseObject(stringJson: String): HashMap<String, Any?> {
     val parsedJson = HashMap<String, Any?>()
 
-    return parsedJson
+    val entriesRegex = """$stringRegex\s*:\s*$stringRegex""".toRegex()
 
-    var iterator = stringJson.removeSurrounding("{", "}").trim()
-    while (iterator.isNotBlank()) {
-        val nextSeparatorIndex = iterator.indexOf(':')
+    val matches = entriesRegex.findAll(stringJson)
+    var iterator = stringJson
 
-        var key = iterator.take(nextSeparatorIndex)
-        if (stringRegex.matchEntire(key) == null) throw IllegalArgumentException()
-        iterator = iterator.drop(nextSeparatorIndex + 1).trim()
-        key = key.trim().replace("\"", "")
+    for (match in matches) {
+        val group = (match.groups.first() ?: throw IllegalArgumentException())
+        val groupValue = group.value
+        val separatorIndex = groupValue.indexOf(':')
 
-        var quotationMarksCount = 0
-        var valueEndIndex = iterator.substring(nextSeparatorIndex + 1).length
-        for (index in 0..<iterator.length) {
-            val ch = iterator[index]
+        val key = groupValue.take(separatorIndex).trim()
+        val rawValue = groupValue.drop(separatorIndex + 1).trim()
 
-            if (ch == '"') quotationMarksCount = (quotationMarksCount + 1) % 2
+        parsedJson[key] = parseValue(rawValue)
 
-            if (ch == ',' && quotationMarksCount == 0) {
-                valueEndIndex = index
-
-                break
-            }
-        }
-
-        val rawValue = iterator.take(valueEndIndex)
-        val value = parseValue(if (rawValue.startsWith('"')) rawValue else rawValue.trim())
-
-        parsedJson[key] = value
-
-        iterator = iterator.drop(rawValue.length + 1).trim()
-
+        iterator = iterator.replace(groupValue, "")
     }
+
+    if (iterator.removeSurrounding("{", "}").replace(",", "").trim().isNotEmpty()) throw IllegalArgumentException()
 
     return parsedJson
 }
@@ -172,8 +156,8 @@ fun Any.friendlyString(): String {
 }
 
 fun main() {
-    for (step in 1 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
-//    val file = File("src/tests/step2/valid.json")
+    for (step in 2 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
+//    val file = File("src/tests/step2/valid2.json")
         try {
             val json = parseFile(file)
 
