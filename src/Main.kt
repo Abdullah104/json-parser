@@ -2,7 +2,10 @@ import java.io.File
 
 val objectRegex = """(\{.*(?<!,)})""".toRegex()
 val arrayRegex = """\[.*(?<!,)]""".toRegex()
-val stringRegex = "\"(.*?)\"".toRegex()
+val stringRegex = "\".*?\"".toRegex()
+val booleanRegex = "true|false".toRegex()
+val nullRegex = "null".toRegex()
+val numberRegex = """\d+""".toRegex()
 
 fun getClosingCharacterIndex(string: String, closingCharacter: Char, openingCharacter: Char): Int {
     var count = 0
@@ -32,7 +35,7 @@ fun parseValue(value: Any?): Any? {
 fun parseObject(stringJson: String): HashMap<String, Any?> {
     val parsedJson = HashMap<String, Any?>()
 
-    val entriesRegex = """$stringRegex\s*:\s*$stringRegex""".toRegex()
+    val entriesRegex = """$stringRegex\s*:\s*($stringRegex|$booleanRegex|$nullRegex|$numberRegex)""".toRegex()
 
     val matches = entriesRegex.findAll(stringJson)
     var iterator = stringJson
@@ -156,8 +159,8 @@ fun Any.friendlyString(): String {
 }
 
 fun main() {
-    for (step in 2 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
-//    val file = File("src/tests/step2/valid2.json")
+    for (step in 3 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
+//    val file = File("src/tests/step3/valid.json")
         try {
             val json = parseFile(file)
 
