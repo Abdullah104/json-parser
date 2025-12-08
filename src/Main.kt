@@ -1,7 +1,7 @@
 import java.io.File
 
-val objectRegex = """(\{.*(?<!,)})""".toRegex()
-val arrayRegex = """\[.*(?<!,)]""".toRegex()
+val objectRegex = """(\{.*?(?<!,)})""".toRegex()
+val arrayRegex = """\[.*?(?<!,)]""".toRegex()
 val stringRegex = "\".*?\"".toRegex()
 val booleanRegex = "true|false".toRegex()
 val nullRegex = "null".toRegex()
@@ -35,7 +35,8 @@ fun parseValue(value: Any?): Any? {
 fun parseObject(stringJson: String): HashMap<String, Any?> {
     val parsedJson = HashMap<String, Any?>()
 
-    val entriesRegex = """$stringRegex\s*:\s*($stringRegex|$booleanRegex|$nullRegex|$numberRegex)""".toRegex()
+    val entriesRegex =
+        """$stringRegex\s*:\s*($stringRegex|$booleanRegex|$nullRegex|$numberRegex|$objectRegex|$arrayRegex)""".toRegex()
 
     val matches = entriesRegex.findAll(stringJson)
     var iterator = stringJson
@@ -48,7 +49,7 @@ fun parseObject(stringJson: String): HashMap<String, Any?> {
         val key = groupValue.take(separatorIndex).trim()
         val rawValue = groupValue.drop(separatorIndex + 1).trim()
 
-        parsedJson[key] = parseValue(rawValue)
+        parsedJson[key.replace("\"", "")] = parseValue(rawValue)
 
         iterator = iterator.replace(groupValue, "")
     }
@@ -159,13 +160,13 @@ fun Any.friendlyString(): String {
 }
 
 fun main() {
-    for (step in 3 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
-//    val file = File("src/tests/step3/valid.json")
-        try {
-            val json = parseFile(file)
+    for (step in 4 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
+//    val file = File("src/tests/step4/valid.json")
+    try {
+        val json = parseFile(file)
 
-            println("${file.path}: ${json.friendlyString()}")
-        } catch (_: IllegalArgumentException) {
-            System.err.println("Invalid json format at ${file.path}")
-        }
+        println("${file.path}: ${json.friendlyString()}")
+    } catch (_: IllegalArgumentException) {
+        System.err.println("Invalid json format at ${file.path}")
+    }
 }
