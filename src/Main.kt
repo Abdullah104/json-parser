@@ -1,6 +1,6 @@
 import java.io.File
 
-val objectRegex = """(\{.*?(?<!,)})""".toRegex()
+val objectRegex = """(\{(\n?.*?)+(?<!,)})\n?""".toRegex()
 val arrayRegex = """\[.*?(?<!,)]""".toRegex()
 val stringRegex = "\".*?\"".toRegex()
 val booleanRegex = "true|false".toRegex()
@@ -54,7 +54,10 @@ fun parseObject(stringJson: String): HashMap<String, Any?> {
         iterator = iterator.replace(groupValue, "")
     }
 
-    if (iterator.removeSurrounding("{", "}").replace(",", "").trim().isNotEmpty()) throw IllegalArgumentException()
+    // Clean iterator
+    iterator = iterator.replace("[,\n{}]".toRegex(), "").removeSurrounding("{", "}").trim()
+
+    if (iterator.isNotEmpty()) throw IllegalArgumentException()
 
     return parsedJson
 }
@@ -102,7 +105,7 @@ fun parseArray(stringArray: String): Array<Any?> {
 }
 
 fun parseFile(file: File): Any {
-    val stringJson = file.readText().replace("\n", "")
+    val stringJson = file.readText()
 
     if (!(objectRegex.matches(stringJson) || arrayRegex.matches(stringJson))) throw IllegalArgumentException()
 
@@ -160,8 +163,8 @@ fun Any.friendlyString(): String {
 }
 
 fun main() {
-    for (step in 4 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
-//    val file = File("src/tests/step4/valid.json")
+    for (step in 2 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
+//    val file = File("src/tests/step2/valid2.json")
     try {
         val json = parseFile(file)
 
