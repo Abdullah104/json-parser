@@ -6,6 +6,7 @@ val stringRegex = "\".*?\"".toRegex()
 val booleanRegex = "true|false".toRegex()
 val nullRegex = "null".toRegex()
 val numberRegex = """\d+""".toRegex()
+val controlCharactersRegex = """[\x00-\x1F]""".toRegex()
 
 fun getClosingCharacterIndex(string: String, closingCharacter: Char, openingCharacter: Char): Int {
     var count = 0
@@ -27,9 +28,12 @@ fun parseValue(value: Any?): Any? {
     else if (value == "null") return null
     else if (objectRegex.matches(value.toString())) return parseObject(value.toString())
     else if (arrayRegex.matches(value.toString())) return parseArray(value.toString())
-    else if (stringRegex.matchEntire(value.toString()) == null) throw IllegalArgumentException()
+    // If all previous conditions fail, then [value] is of type String
+    else if (stringRegex.matchEntire(value.toString()) == null || value.toString()
+            .contains(controlCharactersRegex)
+    ) throw IllegalArgumentException()
 
-    return (value as String).replace("\"", "") // If all previous conditions fail, then [value] is of type String
+    return (value as String).replace("\"", "")
 }
 
 fun parseObject(stringJson: String): HashMap<String, Any?> {
@@ -163,8 +167,8 @@ fun Any.friendlyString(): String {
 }
 
 fun main() {
-    for (step in 2 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
-//    val file = File("src/tests/step2/valid2.json")
+    for (step in 5 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
+//    val file = File("src/tests/step5/fail25.json")
     try {
         val json = parseFile(file)
 
