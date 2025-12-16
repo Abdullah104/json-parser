@@ -22,13 +22,17 @@ fun getClosingCharacterIndex(string: String, closingCharacter: Char, openingChar
 }
 
 fun parseValue(value: Any?): Any? {
-    if (value.toString().toIntOrNull() != null) return value.toString().toInt()
-    else if (value.toString().toDoubleOrNull() != null) return value.toString().toDouble()
+    // Numbers
+    if ("""[^0](\d|\.)+""".toRegex().matches(value.toString())) {
+        if (value.toString().toIntOrNull() != null) return value.toString().toInt()
+        else if (value.toString().toDoubleOrNull() != null) return value.toString().toDouble()
+    }
+
     else if (value.toString().toBooleanStrictOrNull() != null) return value.toString().toBooleanStrict()
     else if (value == "null") return null
     else if (objectRegex.matches(value.toString())) return parseObject(value.toString())
     else if (arrayRegex.matches(value.toString())) return parseArray(value.toString())
-    // If all previous conditions fail, then [value] is of type String
+
     else if (stringRegex.matchEntire(value.toString()) == null || value.toString()
             .contains(controlCharactersRegex)
     ) throw IllegalArgumentException()
