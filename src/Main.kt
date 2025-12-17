@@ -21,18 +21,15 @@ fun getClosingCharacterIndex(string: String, closingCharacter: Char, openingChar
     return -1
 }
 
-fun parseValue(value: Any?): Any? {
+fun parseValue(value: Any?, nestLevel: Int = 0): Any? {
     // Numbers
     if ("""[^0](\d|\.)+""".toRegex().matches(value.toString())) {
         if (value.toString().toIntOrNull() != null) return value.toString().toInt()
         else if (value.toString().toDoubleOrNull() != null) return value.toString().toDouble()
-    }
-
-    else if (value.toString().toBooleanStrictOrNull() != null) return value.toString().toBooleanStrict()
+    } else if (value.toString().toBooleanStrictOrNull() != null) return value.toString().toBooleanStrict()
     else if (value == "null") return null
-    else if (objectRegex.matches(value.toString())) return parseObject(value.toString())
-    else if (arrayRegex.matches(value.toString())) return parseArray(value.toString())
-
+    else if (objectRegex.matches(value.toString())) return parseObject(value.toString(), nestLevel + 1)
+    else if (arrayRegex.matches(value.toString())) return parseArray(value.toString(), nestLevel + 1)
     else if (stringRegex.matchEntire(value.toString()) == null || value.toString()
             .contains(controlCharactersRegex)
     ) throw IllegalArgumentException()
@@ -40,7 +37,9 @@ fun parseValue(value: Any?): Any? {
     return (value as String).replace("\"", "")
 }
 
-fun parseObject(stringJson: String): HashMap<String, Any?> {
+fun parseObject(stringJson: String, nestLevel: Int = 1): HashMap<String, Any?> {
+    if (nestLevel >= 20) throw IllegalArgumentException()
+
     val parsedJson = HashMap<String, Any?>()
 
     val entriesRegex =
@@ -70,7 +69,9 @@ fun parseObject(stringJson: String): HashMap<String, Any?> {
     return parsedJson
 }
 
-fun parseArray(stringArray: String): Array<Any?> {
+fun parseArray(stringArray: String, nestLevel: Int = 1): Array<Any?> {
+    if (nestLevel >= 20) throw IllegalArgumentException()
+
     val list = mutableListOf<Any?>()
 
     // Remove surrounding brackets
@@ -82,7 +83,7 @@ fun parseArray(stringArray: String): Array<Any?> {
 
             if (endIndex == -1) throw IllegalArgumentException()
 
-            list.add(parseObject(iterator.take(endIndex + 1)))
+            list.add(parseObject(iterator.take(endIndex + 1), nestLevel + 1))
 
             iterator = iterator.drop(endIndex + 2).trim()
 
@@ -94,7 +95,7 @@ fun parseArray(stringArray: String): Array<Any?> {
 
             if (endIndex == -1) throw IllegalArgumentException()
 
-            list.add(parseArray(iterator.take(endIndex + 1)))
+            list.add(parseArray(iterator.take(endIndex + 1), nestLevel + 1))
 
             iterator = iterator.drop(endIndex + 2).trim()
 
@@ -173,11 +174,11 @@ fun Any.friendlyString(): String {
 fun main() {
     for (step in 5 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
 //    val file = File("src/tests/step5/fail25.json")
-    try {
-        val json = parseFile(file)
+        try {
+            val json = parseFile(file)
 
-        println("${file.path}: ${json.friendlyString()}")
-    } catch (_: IllegalArgumentException) {
-        System.err.println("Invalid json format at ${file.path}")
-    }
+            println("${file.path}: ${json.friendlyString()}")
+        } catch (_: IllegalArgumentException) {
+            System.err.println("Invalid json format at ${file.path}")
+        }
 }
