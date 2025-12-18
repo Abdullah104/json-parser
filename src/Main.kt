@@ -2,11 +2,12 @@ import java.io.File
 
 val objectRegex = """(\{(\n?.*?)+(?<!,)})\n?""".toRegex()
 val arrayRegex = """\[.*?(?<!,)]""".toRegex()
-val stringRegex = "\".*?\"".toRegex()
 val booleanRegex = "true|false".toRegex()
 val nullRegex = "null".toRegex()
 val numberRegex = """\d+""".toRegex()
+val stringRegex = "\".*?\"".toRegex()
 val controlCharactersRegex = """[\x00-\x1F]""".toRegex()
+val illegalEscapeCharacterRegex = """\\(?!["\\/bfrntu])""".toRegex()
 
 fun getClosingCharacterIndex(string: String, closingCharacter: Char, openingCharacter: Char): Int {
     var count = 0
@@ -31,7 +32,7 @@ fun parseValue(value: Any?, nestLevel: Int = 0): Any? {
     else if (objectRegex.matches(value.toString())) return parseObject(value.toString(), nestLevel + 1)
     else if (arrayRegex.matches(value.toString())) return parseArray(value.toString(), nestLevel + 1)
     else if (stringRegex.matchEntire(value.toString()) == null || value.toString()
-            .contains(controlCharactersRegex)
+            .contains(controlCharactersRegex) || value.toString().contains(illegalEscapeCharacterRegex)
     ) throw IllegalArgumentException()
 
     return (value as String).replace("\"", "")
