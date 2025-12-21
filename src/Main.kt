@@ -1,10 +1,10 @@
 import java.io.File
 
 val objectRegex = """(\{(\n?.*?)+(?<!,)})\n?""".toRegex()
-val arrayRegex = """\[.*?(?<!,)]""".toRegex()
+val arrayRegex = """\[(\n?|.*?)+(?<!,)]\n?""".toRegex()
 val booleanRegex = "true|false".toRegex()
 val nullRegex = "null".toRegex()
-val numberRegex = """\d+""".toRegex()
+val numberRegex = """-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?""".toRegex()
 val stringRegex = "\".*?\"".toRegex()
 val controlCharactersRegex = """[\x00-\x1F]""".toRegex()
 val illegalEscapeCharacterRegex = """\\(?!["\\/bfrntu])""".toRegex()
@@ -24,7 +24,7 @@ fun getClosingCharacterIndex(string: String, closingCharacter: Char, openingChar
 
 fun parseValue(value: Any?, nestLevel: Int = 0): Any? {
     // Numbers
-    if ("""[^0](\d|\.)+""".toRegex().matches(value.toString())) {
+    if (numberRegex.matches(value.toString())) {
         if (value.toString().toIntOrNull() != null) return value.toString().toInt()
         else if (value.toString().toDoubleOrNull() != null) return value.toString().toDouble()
     } else if (value.toString().toBooleanStrictOrNull() != null) return value.toString().toBooleanStrict()
@@ -57,7 +57,7 @@ fun parseObject(stringJson: String, nestLevel: Int = 1): HashMap<String, Any?> {
         val key = groupValue.take(separatorIndex).trim()
         val rawValue = groupValue.drop(separatorIndex + 1).trim()
 
-        parsedJson[key.replace("\"", "")] = parseValue(rawValue)
+        parsedJson[key.replace("\"", "")] = parseValue(rawValue, nestLevel)
 
         iterator = iterator.replace(groupValue, "")
     }
@@ -106,7 +106,7 @@ fun parseArray(stringArray: String, nestLevel: Int = 1): Array<Any?> {
         val nextCommaIndex = iterator.indexOf(',')
         val value = iterator.take(if (nextCommaIndex == -1) iterator.length else nextCommaIndex)
 
-        list.add(parseValue(value.trim()))
+        list.add(parseValue(value.trim(), nestLevel))
 
         iterator = iterator.drop(if (nextCommaIndex == -1) value.length + 2 else nextCommaIndex + 1).trim()
     }
@@ -173,8 +173,8 @@ fun Any.friendlyString(): String {
 }
 
 fun main() {
-    for (step in 5 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
-//    val file = File("src/tests/step5/fail25.json")
+//    for (step in 5 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
+    val file = File("src/tests/step5/pass1.json")
         try {
             val json = parseFile(file)
 
