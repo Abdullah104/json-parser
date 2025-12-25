@@ -35,7 +35,7 @@ fun parseValue(value: Any?, nestLevel: Int = 0): Any? {
             .contains(controlCharactersRegex) || value.toString().contains(illegalEscapeCharacterRegex)
     ) throw IllegalArgumentException()
 
-    return (value as String).replace("\"", "")
+    return (value as String).removeSurrounding("\"", "\"")
 }
 
 fun parseObject(stringJson: String, nestLevel: Int = 1): HashMap<String, Any?> {
@@ -175,11 +175,11 @@ fun Any.friendlyString(): String {
 fun main() {
 //    for (step in 5 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
     val file = File("src/tests/step5/pass1.json")
-        try {
-            val json = parseFile(file)
+    try {
+        val json = parseFile(file)
 
-            println("${file.path}: ${json.friendlyString()}")
-        } catch (_: IllegalArgumentException) {
-            System.err.println("Invalid json format at ${file.path}")
-        }
+        println("${file.path}: ${json.friendlyString()}")
+    } catch (_: IllegalArgumentException) {
+        System.err.println("Invalid json format at ${file.path}")
+    }
 }
