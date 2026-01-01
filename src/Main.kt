@@ -5,7 +5,7 @@ val arrayRegex = """\[(\n?|.*?)+(?<!,)]\n?""".toRegex()
 val booleanRegex = "true|false".toRegex()
 val nullRegex = "null".toRegex()
 val numberRegex = """-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?""".toRegex()
-val stringRegex = "\".*?\"".toRegex()
+val stringRegex = "(?<!\\\\)\".*?(?<!\\\\)\"".toRegex()
 val controlCharactersRegex = """[\x00-\x1F]""".toRegex()
 val illegalEscapeCharacterRegex = """\\(?!["\\/bfrntu])""".toRegex()
 
