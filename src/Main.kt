@@ -52,7 +52,24 @@ fun parseObject(stringJson: String, nestLevel: Int = 1): HashMap<String, Any?> {
     for (match in matches) {
         val group = (match.groups.first() ?: throw IllegalArgumentException())
         val groupValue = group.value
-        val separatorIndex = groupValue.indexOf(':')
+
+        var separatorIndex = 0
+        var stringMarkCount = 1
+        for (i in 1..<groupValue.length) {
+            val character = groupValue[i]
+
+            if (character == ':') {
+                if (stringMarkCount == 0) {
+                    separatorIndex = i
+
+                    break
+                }
+            }
+
+            if (groupValue.substring(i - 1, i + 1).compareTo("""\"""") == 0) continue
+
+            if (character == '"') stringMarkCount = (stringMarkCount + 1) % 2
+        }
 
         val key = groupValue.take(separatorIndex).trim()
         val rawValue = groupValue.drop(separatorIndex + 1).trim()
