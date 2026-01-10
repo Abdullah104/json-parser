@@ -5,7 +5,7 @@ val arrayRegex = """\[(\n?|.*?)+(?<!,)]\n?""".toRegex()
 val booleanRegex = "true|false".toRegex()
 val nullRegex = "null".toRegex()
 val numberRegex = """-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?""".toRegex()
-val stringRegex = "(?<!\\\\)\".*?(?<!\\\\)\"".toRegex()
+val stringRegex = """"(.*?)+(?<!\\(?<!\\))"""".toRegex()
 val controlCharactersRegex = """[\x00-\x1F]""".toRegex()
 val illegalEscapeCharacterRegex = """\\(?!["\\/bfrntu])""".toRegex()
 
@@ -25,8 +25,9 @@ fun getClosingCharacterIndex(string: String, closingCharacter: Char, openingChar
 fun parseValue(value: Any?, nestLevel: Int = 0): Any? {
     // Numbers
     if (numberRegex.matches(value.toString())) {
-        if (value.toString().toIntOrNull() != null) return value.toString().toInt()
-        else if (value.toString().toDoubleOrNull() != null) return value.toString().toDouble()
+        return if (value.toString().toIntOrNull() != null) value.toString().toInt()
+        else if (value.toString().toDoubleOrNull() != null) value.toString().toDouble()
+        else throw IllegalArgumentException()
     } else if (value.toString().toBooleanStrictOrNull() != null) return value.toString().toBooleanStrict()
     else if (value == "null") return null
     else if (objectRegex.matches(value.toString())) return parseObject(value.toString(), nestLevel + 1)
@@ -35,7 +36,7 @@ fun parseValue(value: Any?, nestLevel: Int = 0): Any? {
             .contains(controlCharactersRegex) || value.toString().contains(illegalEscapeCharacterRegex)
     ) throw IllegalArgumentException()
 
-    return (value as String).removeSurrounding("\"", "\"")
+    return (value as String).substring(value.indexOf("\"") + 1, value.lastIndexOf("\""))
 }
 
 fun parseObject(stringJson: String, nestLevel: Int = 1): HashMap<String, Any?> {
@@ -191,7 +192,7 @@ fun Any.friendlyString(): String {
 
 fun main() {
 //    for (step in 5 downTo 1) for (file in File("src/tests/step$step").listFiles()!!)
-    val file = File("src/tests/step5/pass1.json")
+    val file = File("src/tests/step5/fail38.json")
     try {
         val json = parseFile(file)
 
