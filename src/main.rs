@@ -1,18 +1,30 @@
-use std::{fs::read_dir, io::Read};
+mod json_parser;
+
+use std::{
+    fs::{File, read_dir},
+    io::Read,
+};
+
+use json_parser::JsonParser;
 
 fn main() {
     let root_test_directory = read_dir("tests").unwrap();
 
-    for root_test_directory_result in root_test_directory {
-        let test_directory = read_dir(root_test_directory_result.unwrap().path()).unwrap();
+    for test_step_directory_result in root_test_directory {
+        let step_path = test_step_directory_result.unwrap().path();
+        if !step_path.is_dir() {
+            continue;
+        }
 
-        for test_result in test_directory {
-            let mut test = std::fs::File::open(test_result.unwrap().path()).unwrap();
+        let step_directory = read_dir(step_path).unwrap();
+
+        for test_result in step_directory {
+            let mut test = File::open(test_result.unwrap().path()).unwrap();
             let mut raw_json = String::new();
 
             test.read_to_string(&mut raw_json).unwrap();
 
-            println!("{}", raw_json);
+            let json_parser = JsonParser::new(raw_json);
         }
     }
 }
