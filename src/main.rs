@@ -1,11 +1,10 @@
 mod json_parser;
+mod json_value;
 
 use std::{
     fs::{File, read_dir},
     io::Read,
 };
-
-use json_parser::JsonParser;
 
 fn main() {
     let root_test_directory = read_dir("tests").unwrap();
@@ -24,7 +23,8 @@ fn main() {
 
             test.read_to_string(&mut raw_json).unwrap();
 
-            let json_parser = JsonParser::new(raw_json);
+            let json_parser = json_parser::JsonParser::new(raw_json);
+            println!("{:?}", json_parser.parse())
         }
     }
 }
