@@ -15,16 +15,22 @@ fn main() {
             continue;
         }
 
-        let step_directory = read_dir(step_path).unwrap();
+        let step_directory = read_dir(&step_path).unwrap();
 
         for test_result in step_directory {
-            let mut test = File::open(test_result.unwrap().path()).unwrap();
+            let test_path = test_result.unwrap().path();
+            let mut test = File::open(&test_path).unwrap();
             let mut raw_json = String::new();
 
             test.read_to_string(&mut raw_json).unwrap();
 
             let json_parser = json_parser::JsonParser::new(raw_json);
-            println!("{:?}", json_parser.parse())
+
+            print!("{}: ", test_path.to_str().unwrap());
+            match json_parser.parse() {
+                Some(json) => println!("{:?}", json),
+                None => println!("Invalid json format"),
+            }
         }
     }
 }
