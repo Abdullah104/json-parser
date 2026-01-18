@@ -1,5 +1,7 @@
 mod json_parser;
 mod json_value;
+mod pair;
+mod tokens;
 
 use std::{
     fs::{File, read_dir},
