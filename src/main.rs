@@ -30,7 +30,12 @@ fn main() {
 
             print!("{}: ", test_path.to_str().unwrap());
             match json_parser.parse() {
-                Some(json) => println!("{:?}", json),
+                Some(json) => println!(
+                    "{:?}",
+                    match json {
+                        json_value::JsonValue::Object(object) => object,
+                    }
+                ),
                 None => println!("Invalid json format"),
             }
         }

@@ -1,4 +1,4 @@
 pub struct Pair {
-    key: String,
-    value: crate::json_value::JsonValue,
+    pub key: String,
+    pub value: crate::json_value::JsonValue,
 }
