@@ -27,9 +27,9 @@ fn main() {
         //     continue;
         // }
 
-        if step_path.to_str().unwrap().contains("3") {
-            continue;
-        }
+        // if step_path.to_str().unwrap().contains("3") {
+        //     continue;
+        // }
 
         if step_path.to_str().unwrap().contains("4") {
             continue;

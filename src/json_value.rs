@@ -4,8 +4,8 @@ use std::collections::{self, HashMap};
 pub enum JsonValue {
     Object(HashMap<String, JsonValue>),
     String(String),
+    Boolean(bool),
+    Null,
+    Number(u128),
     // Array(Vec<JsonValue>),
-    // Boolean(bool),
-    // Null,
-    // Number(u128),
 }

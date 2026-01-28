@@ -1,7 +1,14 @@
 use std::collections::HashMap;
 
-use crate::{json_value::JsonValue, pair::Pair, tokens::Token};
+use regex::Regex;
 
+use crate::{
+    json_value::JsonValue,
+    pair::Pair,
+    tokens::{NumberToken, Token},
+};
+
+#[derive(Clone)]
 pub struct JsonParser {
     pos: usize,
     input: String,
@@ -76,6 +83,108 @@ impl JsonParser {
         return Some(string);
     }
 
+    fn parse_pattern(&mut self, pattern: String) -> bool {
+        for character in pattern.chars() {
+            if !self.consume(Some(character)) {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    fn parse_boolean(&mut self, boolean: bool) -> bool {
+        self.parse_pattern(boolean.to_string())
+    }
+
+    fn parse_true(&mut self) -> Option<JsonValue> {
+        self.parse_boolean(true)
+            .then_some(JsonValue::Boolean(true))
+            .or_else(|| None)
+    }
+
+    fn parse_false(&mut self) -> Option<JsonValue> {
+        self.parse_boolean(false)
+            .then_some(JsonValue::Boolean(false))
+            .or_else(|| None)
+    }
+
+    fn parse_null(&mut self) -> Option<JsonValue> {
+        self.parse_pattern("null".to_string())
+            .then_some(JsonValue::Null)
+            .or_else(|| None)
+    }
+
+    fn is_token_valid_numeric(&self, token: char) -> bool {
+        Regex::new(r"[0-9]")
+            .unwrap()
+            .is_match(token.to_string().as_str())
+    }
+
+    fn parse_number(&mut self) -> Option<JsonValue> {
+        let mut number_string = String::new();
+
+        loop {
+            match self.current_token() {
+                Some(token) => {
+                    if self.is_token_valid_numeric(token) || token == NumberToken::DOT {
+                        number_string.push(token);
+                        self.consume(Some(token));
+                    } else {
+                        self.consume_empty_spaces();
+
+                        match self.current_token() {
+                            Some(token) => {
+                                if Regex::new(r"[,}\]]")
+                                    .unwrap()
+                                    .is_match(token.to_string().as_str())
+                                {
+                                    break;
+                                }
+                            }
+                            None => return None,
+                        }
+                    }
+                }
+                None => return None,
+            }
+        }
+
+        match number_string.parse::<u128>() {
+            Ok(num) => Some(JsonValue::Number(num)),
+            Err(_) => None,
+        }
+    }
+
+    fn parse_value(&mut self) -> Option<JsonValue> {
+        return match self.current_token() {
+            Some(token) => {
+                if token == Token::QUOTE {
+                    return self.parse_string().map(JsonValue::String);
+                }
+
+                if token == 't' {
+                    return self.parse_true();
+                }
+
+                if token == 'f' {
+                    return self.parse_false();
+                }
+
+                if token == 'n' {
+                    return self.parse_null();
+                }
+
+                if self.is_token_valid_numeric(token) {
+                    return self.parse_number();
+                }
+
+                return None;
+            }
+            None => None,
+        };
+    }
+
     fn parse_pair(&mut self) -> Option<Pair> {
         if !self.consume_empty_spaces() {
             return None;
@@ -94,14 +203,14 @@ impl JsonParser {
             return None;
         }
 
-        let value = self.parse_string();
+        let value = self.parse_value();
         if value.is_none() {
             return None;
         }
 
         return Some(Pair {
             key: key.unwrap(),
-            value: JsonValue::String(value.unwrap()),
+            value: value.unwrap(),
         });
     }
 
