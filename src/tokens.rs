@@ -11,6 +11,7 @@ impl Token {
     pub const BEGIN_TRUE: char = 't';
     pub const BEGIN_FALSE: char = 'f';
     pub const BEGIN_NULL: char = 'n';
+    pub const NEW_LINE: char = '\n';
 }
 
 pub struct EscapeToken;
