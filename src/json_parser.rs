@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, prelude};
 
 use regex::Regex;
 
@@ -156,6 +156,48 @@ impl JsonParser {
         }
     }
 
+    fn parse_array(&mut self) -> Option<JsonValue> {
+        if !self.consume(Some(Token::BEGIN_ARRAY)) {
+            return None;
+        }
+
+        let mut array = Vec::new();
+
+        self.consume_empty_spaces();
+        let mut more_items = self.current_token() != Some(Token::END_ARRAY);
+
+        loop {
+            if more_items {
+                match self.parse_value() {
+                    Some(value) => {
+                        array.push(value);
+                        self.consume_empty_spaces();
+
+                        more_items = self.current_token() == Some(Token::COMMA);
+                        self.consume(Some(Token::COMMA));
+
+                        if !more_items {
+                            break;
+                        }
+                    }
+                    None => {
+                        return None;
+                    }
+                }
+            }
+
+            if !more_items && self.current_token() == Some(Token::END_ARRAY) {
+                break;
+            }
+        }
+
+        if !self.consume(Some(Token::END_ARRAY)) {
+            return None;
+        }
+
+        return Some(JsonValue::Array(array));
+    }
+
     fn parse_value(&mut self) -> Option<JsonValue> {
         return match self.current_token() {
             Some(token) => {
@@ -177,6 +219,14 @@ impl JsonParser {
 
                 if self.is_token_valid_numeric(token) {
                     return self.parse_number();
+                }
+
+                if token == Token::BEGIN_OBJECT {
+                    return self.parse_object();
+                }
+
+                if token == Token::BEGIN_ARRAY {
+                    return self.parse_array();
                 }
 
                 return None;
@@ -214,7 +264,7 @@ impl JsonParser {
         });
     }
 
-    fn parse_object(mut self) -> Option<JsonValue> {
+    fn parse_object(&mut self) -> Option<JsonValue> {
         if !self.consume(Some(Token::BEGIN_OBJECT)) {
             return None;
         }
@@ -229,12 +279,13 @@ impl JsonParser {
                 match self.parse_pair() {
                     Some(pair) => {
                         map.insert(pair.key, pair.value);
+
                         self.consume_empty_spaces();
-
                         more_pairs = self.current_token() == Some(Token::COMMA);
-                        self.consume(Some(Token::COMMA));
 
-                        if !more_pairs {
+                        if more_pairs {
+                            self.consume(Some(Token::COMMA));
+                        } else {
                             break;
                         }
                     }
@@ -247,12 +298,16 @@ impl JsonParser {
             }
         }
 
+        if !self.consume(Some(Token::END_OBJECT)) {
+            return None;
+        }
+
         return Some(JsonValue::Object(map));
     }
 
-    pub fn parse(self) -> Option<JsonValue> {
+    pub fn parse(mut self) -> Option<JsonValue> {
         return match self.current_token() {
-            Some(_) => self.parse_object(),
+            Some(_) => self.parse_value(),
             None => None,
         };
     }

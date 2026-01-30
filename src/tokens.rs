@@ -29,18 +29,6 @@ impl EscapeToken {
 
 pub struct NumberToken;
 impl NumberToken {
-    pub const ZERO: char = '0';
-    pub const ONE: char = '1';
-    pub const TWO: char = '2';
-    pub const THREE: char = '3';
-    pub const FOUR: char = '4';
-    pub const FIVE: char = '5';
-    pub const SIX: char = '6';
-    pub const SEVEN: char = '7';
-    pub const EIGHT: char = '8';
-    pub const NINE: char = '9';
-    pub const PLUS: char = '+';
-    pub const MINUS: char = '-';
     pub const DOT: char = '.';
     pub const SMALL_EXPONENT: char = 'e';
     pub const CAPITAL_EXPONENT: char = 'E';

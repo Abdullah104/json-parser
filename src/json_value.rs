@@ -1,4 +1,4 @@
-use std::collections::{self, HashMap};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub enum JsonValue {
@@ -7,5 +7,5 @@ pub enum JsonValue {
     Boolean(bool),
     Null,
     Number(u128),
-    // Array(Vec<JsonValue>),
+    Array(Vec<JsonValue>),
 }
