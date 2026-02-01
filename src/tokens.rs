@@ -23,7 +23,7 @@ impl EscapeToken {
     pub const FORM_FEED: char = 'f';
     pub const LINE_FEED: char = 'n';
     pub const CAR_RETURN: char = 'r';
-    pub const HORIZONTAL_TAB: char = 'r';
+    pub const TAB: char = 'r';
     pub const HEX: char = 'u';
 }
 

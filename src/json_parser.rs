@@ -50,6 +50,19 @@ impl JsonParser {
         };
     }
 
+    fn is_control_code(&self) -> Option<bool> {
+        match self.current_token() {
+            Some(token) => Some(
+                Regex::new(
+                    r"[\u0000-\u001F\u007F-\u009F\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]",
+                )
+                .unwrap()
+                .is_match(token.to_string().as_str()),
+            ),
+            None => None,
+        }
+    }
+
     fn parse_string(&mut self) -> Option<String> {
         if !self.consume_empty_spaces() {
             return None;
@@ -71,6 +84,10 @@ impl JsonParser {
                     }
 
                     let mut pushed = false;
+
+                    if self.is_control_code().is_none_or(|is_control| is_control) {
+                        return None;
+                    }
 
                     if token == Token::ESCAPE {
                         self.consume(None);
