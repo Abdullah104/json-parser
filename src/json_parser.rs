@@ -1,11 +1,11 @@
-use std::{collections::HashMap, prelude};
+use std::collections::HashMap;
 
 use regex::Regex;
 
 use crate::{
     json_value::JsonValue,
     pair::Pair,
-    tokens::{NumberToken, Token},
+    tokens::{EscapeToken, NumberToken, Token},
 };
 
 #[derive(Clone)]
@@ -70,7 +70,34 @@ impl JsonParser {
                         break;
                     }
 
-                    string.push(token);
+                    let mut pushed = false;
+
+                    if token == Token::ESCAPE {
+                        self.consume(None);
+
+                        match self.current_token() {
+                            Some(t) => match t {
+                                EscapeToken::BACK_SLASH => {
+                                    string.push(t);
+                                    self.consume(None);
+
+                                    pushed = true;
+                                }
+                                EscapeToken::LINE_FEED => {
+                                    string.push(t);
+                                    self.consume(None);
+
+                                    pushed = true;
+                                }
+                                _ => return None,
+                            },
+                            None => return None,
+                        }
+                    }
+
+                    if !pushed {
+                        string.push(token);
+                    }
 
                     if !self.consume(None) {
                         return None;
