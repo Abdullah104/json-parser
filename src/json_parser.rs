@@ -184,6 +184,8 @@ impl JsonParser {
                                     .is_match(token.to_string().as_str())
                                 {
                                     break;
+                                } else {
+                                    return None;
                                 }
                             }
                             None => return None,
