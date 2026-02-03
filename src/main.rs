@@ -48,7 +48,7 @@ fn main() {
 
             test.read_to_string(&mut raw_json).unwrap();
 
-            let json_parser = JsonParser::new(raw_json);
+            let json_parser = JsonParser::new(raw_json, Some(19));
 
             print!("{}: ", test_path.to_str().unwrap());
             match json_parser.parse() {

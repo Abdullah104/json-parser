@@ -12,11 +12,16 @@ use crate::{
 pub struct JsonParser {
     pos: usize,
     input: String,
+    max_depth: Option<i8>,
 }
 
 impl JsonParser {
-    pub fn new(input: String) -> Self {
-        JsonParser { pos: 0, input }
+    pub fn new(input: String, depth: Option<i8>) -> Self {
+        JsonParser {
+            pos: 0,
+            input,
+            max_depth: depth,
+        }
     }
 
     fn current_token(&self) -> Option<char> {
@@ -212,7 +217,15 @@ impl JsonParser {
         }
     }
 
-    fn parse_array(&mut self) -> Option<JsonValue> {
+    fn depth_valid(&self, depth: i8) -> bool {
+        return self.max_depth.is_none_or(|max_depth| depth <= max_depth);
+    }
+
+    fn parse_array(&mut self, depth: i8) -> Option<JsonValue> {
+        if !self.depth_valid(depth) {
+            return None;
+        }
+
         if !self.consume(Some(Token::BEGIN_ARRAY)) {
             return None;
         }
@@ -224,7 +237,7 @@ impl JsonParser {
 
         loop {
             if more_items {
-                match self.parse_value() {
+                match self.parse_value(depth) {
                     Some(value) => {
                         array.push(value);
                         self.consume_empty_spaces();
@@ -254,18 +267,18 @@ impl JsonParser {
         return Some(JsonValue::Array(array));
     }
 
-    fn parse_value(&mut self) -> Option<JsonValue> {
+    fn parse_value(&mut self, depth: i8) -> Option<JsonValue> {
         return match self.current_token() {
             Some(token) => {
                 if token == Token::QUOTE {
                     return self.parse_string().map(JsonValue::String);
                 }
 
-                if token == 't' {
+                if token == Token::BEGIN_TRUE {
                     return self.parse_true();
                 }
 
-                if token == 'f' {
+                if token == Token::BEGIN_FALSE {
                     return self.parse_false();
                 }
 
@@ -278,11 +291,11 @@ impl JsonParser {
                 }
 
                 if token == Token::BEGIN_OBJECT {
-                    return self.parse_object();
+                    return self.parse_object(depth + 1);
                 }
 
                 if token == Token::BEGIN_ARRAY {
-                    return self.parse_array();
+                    return self.parse_array(depth + 1);
                 }
 
                 return None;
@@ -291,7 +304,7 @@ impl JsonParser {
         };
     }
 
-    fn parse_pair(&mut self) -> Option<Pair> {
+    fn parse_pair(&mut self, depth: i8) -> Option<Pair> {
         if !self.consume_empty_spaces() {
             return None;
         }
@@ -309,7 +322,7 @@ impl JsonParser {
             return None;
         }
 
-        let value = self.parse_value();
+        let value = self.parse_value(depth);
         if value.is_none() {
             return None;
         }
@@ -320,7 +333,11 @@ impl JsonParser {
         });
     }
 
-    fn parse_object(&mut self) -> Option<JsonValue> {
+    fn parse_object(&mut self, depth: i8) -> Option<JsonValue> {
+        if !self.depth_valid(depth) {
+            return None;
+        }
+
         if !self.consume(Some(Token::BEGIN_OBJECT)) {
             return None;
         }
@@ -332,7 +349,7 @@ impl JsonParser {
 
         loop {
             if more_pairs {
-                match self.parse_pair() {
+                match self.parse_pair(depth) {
                     Some(pair) => {
                         map.insert(pair.key, pair.value);
 
@@ -363,7 +380,7 @@ impl JsonParser {
 
     pub fn parse(mut self) -> Option<JsonValue> {
         return match self.current_token() {
-            Some(_) => self.parse_value(),
+            Some(_) => self.parse_value(1),
             None => None,
         };
     }
