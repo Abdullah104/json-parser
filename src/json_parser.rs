@@ -197,7 +197,17 @@ impl JsonParser {
         }
 
         match number_string.parse::<u128>() {
-            Ok(num) => Some(JsonValue::Number(num)),
+            Ok(num) => {
+                if number_string.starts_with("0")
+                    && !Regex::new(r"[eE]")
+                        .unwrap()
+                        .is_match(number_string.as_str())
+                {
+                    return None;
+                }
+
+                Some(JsonValue::Number(num))
+            }
             Err(_) => None,
         }
     }
