@@ -380,7 +380,7 @@ impl JsonParser {
 
     pub fn parse(mut self) -> Option<JsonValue> {
         return match self.current_token() {
-            Some(_) => self.parse_value(1),
+            Some(_) => self.parse_value(0),
             None => None,
         };
     }
