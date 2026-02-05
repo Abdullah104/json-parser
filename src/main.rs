@@ -35,9 +35,9 @@ fn main() {
         //     continue;
         // }
 
-        if step_path.to_str().unwrap().contains("5") {
-            continue;
-        }
+        // if step_path.to_str().unwrap().contains("5") {
+        //     continue;
+        // }
 
         let step_directory = read_dir(&step_path).unwrap();
 
