@@ -35,9 +35,9 @@ fn main() {
         //     continue;
         // }
 
-        // if step_path.to_str().unwrap().contains("5") {
-        //     continue;
-        // }
+        if step_path.to_str().unwrap().contains("5") {
+            continue;
+        }
 
         let step_directory = read_dir(&step_path).unwrap();
 
@@ -52,7 +52,7 @@ fn main() {
 
             print!("{}: ", test_path.to_str().unwrap());
             match json_parser.parse() {
-                Some(json) => println!("{:#?}", json),
+                Some(json) => println!("{json:#?}"),
                 None => println!("Invalid json format"),
             }
         }

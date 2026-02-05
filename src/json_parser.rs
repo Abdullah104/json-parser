@@ -243,9 +243,9 @@ impl JsonParser {
                         self.consume_empty_spaces();
 
                         more_items = self.current_token() == Some(Token::COMMA);
-                        self.consume(Some(Token::COMMA));
-
-                        if !more_items {
+                        if more_items {
+                            self.consume(Some(Token::COMMA));
+                        } else {
                             break;
                         }
                     }
