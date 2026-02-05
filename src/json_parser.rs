@@ -282,7 +282,7 @@ impl JsonParser {
                     return self.parse_false();
                 }
 
-                if token == 'n' {
+                if token == Token::BEGIN_NULL {
                     return self.parse_null();
                 }
 
