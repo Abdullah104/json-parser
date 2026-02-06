@@ -164,8 +164,8 @@ impl JsonParser {
             .or_else(|| None)
     }
 
-    fn is_token_valid_numeric(&self, token: char) -> bool {
-        Regex::new(r"[0-9]")
+    fn is_token_valid_number_character(&self, token: char) -> bool {
+        Regex::new(r"[0-9]|[,-]")
             .unwrap()
             .is_match(token.to_string().as_str())
     }
@@ -176,7 +176,7 @@ impl JsonParser {
         loop {
             match self.current_token() {
                 Some(token) => {
-                    if self.is_token_valid_numeric(token) || token == NumberToken::DOT {
+                    if self.is_token_valid_number_character(token) {
                         number_string.push(token);
                         self.consume(Some(token));
                     } else {
@@ -201,7 +201,7 @@ impl JsonParser {
             }
         }
 
-        match number_string.parse::<u128>() {
+        match number_string.parse::<f64>() {
             Ok(num) => {
                 if number_string.starts_with("0")
                     && !Regex::new(r"[eE]")
@@ -290,7 +290,7 @@ impl JsonParser {
                     return self.parse_null();
                 }
 
-                if self.is_token_valid_numeric(token) {
+                if self.is_token_valid_number_character(token) {
                     return self.parse_number();
                 }
 

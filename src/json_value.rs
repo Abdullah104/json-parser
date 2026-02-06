@@ -7,6 +7,6 @@ pub enum JsonValue {
     String(String),
     Boolean(bool),
     Null,
-    Number(u128),
+    Number(f64),
     Array(Vec<JsonValue>),
 }
