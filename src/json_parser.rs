@@ -165,7 +165,7 @@ impl JsonParser {
     }
 
     fn is_token_valid_number_character(&self, token: char) -> bool {
-        Regex::new(r"[0-9]|[.-]")
+        Regex::new(r"[0-9]|[.-]|e|E")
             .unwrap()
             .is_match(token.to_string().as_str())
     }
