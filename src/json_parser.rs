@@ -207,6 +207,7 @@ impl JsonParser {
                     && !Regex::new(r"[eE]")
                         .unwrap()
                         .is_match(number_string.as_str())
+                    && num != 0.0
                 {
                     return None;
                 }
