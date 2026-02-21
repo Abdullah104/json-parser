@@ -99,13 +99,9 @@ impl JsonParser {
 
                         match self.current_token() {
                             Some(t) => match t {
-                                EscapeToken::BACK_SLASH => {
-                                    string.push(t);
-                                    self.consume(None);
-
-                                    pushed = true;
-                                }
-                                EscapeToken::LINE_FEED => {
+                                EscapeToken::BACK_SLASH
+                                | EscapeToken::LINE_FEED
+                                | EscapeToken::QUOTE => {
                                     string.push(t);
                                     self.consume(None);
 
@@ -119,10 +115,10 @@ impl JsonParser {
 
                     if !pushed {
                         string.push(token);
-                    }
 
-                    if !self.consume(None) {
-                        return None;
+                        if !self.consume(None) {
+                            return None;
+                        }
                     }
                 }
                 None => return None,
