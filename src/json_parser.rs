@@ -101,7 +101,11 @@ impl JsonParser {
                             Some(t) => match t {
                                 EscapeToken::BACK_SLASH
                                 | EscapeToken::LINE_FEED
-                                | EscapeToken::QUOTE => {
+                                | EscapeToken::QUOTE
+                                | EscapeToken::BACKSPACE
+                                | EscapeToken::FORM_FEED
+                                | EscapeToken::CAR_RETURN
+                                | EscapeToken::TAB => {
                                     string.push(t);
                                     self.consume(None);
 
