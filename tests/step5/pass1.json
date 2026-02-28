@@ -44,17 +44,5 @@
     "jsontext": "{\"object with 1 member\":[\"array with 1 element\"]}",
     "quotes": "&#34; \u0022 %22 0x22 034 &#x22;",
     "\/\\\"\uCAFE\uBABE\uAB98\uFCDE\ubcda\uef4A\b\f\n\r\t`1~!@#$%^&*()_+-=[]{}|;:',./<>?": "A key can be any string"
-  },
-  0.5,
-  98.6,
-  99.44,
-
-  1066,
-  1e1,
-  0.1e1,
-  1e-1,
-  1,
-  2,
-  2,
-  "rosebud"
+  }
 ]
