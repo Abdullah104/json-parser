@@ -5,7 +5,7 @@ use regex::Regex;
 use crate::{
     json_value::JsonValue,
     pair::Pair,
-    tokens::{EscapeToken, NumberToken, Token},
+    tokens::{EscapeToken, Token},
 };
 
 #[derive(Clone)]
@@ -68,6 +68,24 @@ impl JsonParser {
         }
     }
 
+    fn is_escape_character(&self) -> Option<bool> {
+        match self.current_token() {
+            Some(token) => match token {
+                EscapeToken::BACK_SLASH
+                | EscapeToken::LINE_FEED
+                | EscapeToken::QUOTE
+                | EscapeToken::BACKSPACE
+                | EscapeToken::FORM_FEED
+                | EscapeToken::CAR_RETURN
+                | EscapeToken::TAB
+                | EscapeToken::FORWARD_SLASH
+                | EscapeToken::HEX => Some(true),
+                _ => Some(false),
+            },
+            None => None,
+        }
+    }
+
     fn parse_string(&mut self) -> Option<String> {
         if !self.consume_empty_spaces() {
             return None;
@@ -98,21 +116,19 @@ impl JsonParser {
                         self.consume(None);
 
                         match self.current_token() {
-                            Some(t) => match t {
-                                EscapeToken::BACK_SLASH
-                                | EscapeToken::LINE_FEED
-                                | EscapeToken::QUOTE
-                                | EscapeToken::BACKSPACE
-                                | EscapeToken::FORM_FEED
-                                | EscapeToken::CAR_RETURN
-                                | EscapeToken::TAB => {
+                            Some(t) => {
+                                if self
+                                    .is_escape_character()
+                                    .is_some_and(|is_escape_character| is_escape_character)
+                                {
                                     string.push(t);
                                     self.consume(None);
 
                                     pushed = true;
+                                } else {
+                                    return None;
                                 }
-                                _ => return None,
-                            },
+                            }
                             None => return None,
                         }
                     }
