@@ -26,10 +26,3 @@ impl EscapeToken {
     pub const TAB: char = 't';
     pub const HEX: char = 'u';
 }
-
-pub struct NumberToken;
-impl NumberToken {
-    pub const DOT: char = '.';
-    pub const SMALL_EXPONENT: char = 'e';
-    pub const CAPITAL_EXPONENT: char = 'E';
-}

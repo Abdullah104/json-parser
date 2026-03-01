@@ -291,35 +291,21 @@ impl JsonParser {
     fn parse_value(&mut self, depth: i8) -> Option<JsonValue> {
         return match self.current_token() {
             Some(token) => {
-                if token == Token::QUOTE {
-                    return self.parse_string().map(JsonValue::String);
-                }
-
-                if token == Token::BEGIN_TRUE {
-                    return self.parse_true();
-                }
-
-                if token == Token::BEGIN_FALSE {
-                    return self.parse_false();
-                }
-
-                if token == Token::BEGIN_NULL {
-                    return self.parse_null();
-                }
-
-                if self.is_token_valid_number_character(token) {
-                    return self.parse_number();
-                }
-
-                if token == Token::BEGIN_OBJECT {
-                    return self.parse_object(depth + 1);
-                }
-
-                if token == Token::BEGIN_ARRAY {
-                    return self.parse_array(depth + 1);
-                }
-
-                return None;
+                return match token {
+                    Token::QUOTE => self.parse_string().map(JsonValue::String),
+                    Token::BEGIN_TRUE => self.parse_true(),
+                    Token::BEGIN_FALSE => self.parse_false(),
+                    Token::BEGIN_NULL => self.parse_null(),
+                    Token::BEGIN_OBJECT => self.parse_object(depth + 1),
+                    Token::BEGIN_ARRAY => self.parse_array(depth + 1),
+                    _ => {
+                        if self.is_token_valid_number_character(token) {
+                            self.parse_number()
+                        } else {
+                            None
+                        }
+                    }
+                };
             }
             None => None,
         };
@@ -401,7 +387,17 @@ impl JsonParser {
 
     pub fn parse(mut self) -> Option<JsonValue> {
         return match self.current_token() {
-            Some(_) => self.parse_value(0),
+            Some(_) => {
+                let value = self.parse_value(0);
+
+                self.consume_empty_spaces();
+
+                if self.current_token().is_some() {
+                    return None;
+                }
+
+                return value;
+            }
             None => None,
         };
     }
